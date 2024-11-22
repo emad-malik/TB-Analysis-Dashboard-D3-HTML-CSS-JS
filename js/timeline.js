@@ -3,12 +3,14 @@ const margins = { top: 20, right: 30, bottom: 40, left: 50 };
 const width = 800 - margins.left - margins.right;
 const height = 400 - margins.top - margins.bottom;
 
-const svg = d3.select("body")
-    .append("svg")
-    .attr("width", width + margins.right + margins.left)
-    .attr("height", height + margins.top + margins.bottom)
-    .append("g")
-    .attr("transform", `translate(${margins.left},${margins.top})`);
+
+// load the timeline visualization in dboard
+const svg = d3.select("#timeline-container")
+        .append("svg")
+        .attr("width", width + margins.right + margins.left)
+        .attr("height", height + margins.top + margins.bottom)
+        .append("g")
+        .attr("transform", `translate(${margins.left},${margins.top})`);
 
 const tooltip = d3.select("#tooltip");
 
@@ -173,7 +175,7 @@ d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
         .on("zoom", function(event) {
             svg.attr("transform", event.transform);
         });
-    svg.call(zoom);
+        svg.call(zoom);
 
     // Legend
     const legend = d3.select("#legend");

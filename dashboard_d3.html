@@ -20,16 +20,37 @@
         <div class="stat-card" id="stat4">Countries Analyzed</div>
     </div>
 
-    <!-- Timeline -->
-    <div class="visualization timeline">
-        <div id="timeline-container"></div>
+
+    <!-- ELEMENTS FOR TIMELINE VISUALIZATION -->
+
+     <!-- pause button -->
+    <div id="control-buttons">
+        <button id="pause-btn">Pause Animation</button>
     </div>
+
+    <!-- slider -->
+    <div>
+        <label for="date-slider">Select Date Range:</label>
+        <input type="range" id="date-slider" min="2015" max="2024" step="1" value="2015" />
+        <span id="slider-value">2024</span>
+    </div>
+
+    <!-- tooltip div -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <!-- legend div -->
+    <div id="legend" class="legend"></div>
+    <div id="timeline-container" style="width: 800px; height: 400px;"></div>
+
 
     <!-- Row of two visualizations -->
     <div class="visualization-row">
         <div id="tree-container" class="visualization half"></div>
         <div id="map-container" class="visualization half"></div>
     </div>
+
+
+
 
     <!-- Row of two visualizations -->
     <div class="visualization-row">
@@ -54,9 +75,9 @@
 
     <!-- Import scripts for visualizations -->
     <script src="js/timeline.js"></script>
-    <script src="js/tree.js"></script>
+    <!-- <script src="js/tree.js"></script>
     <script src="js/map.js"></script>
     <script src="js/fd.js"></script>
-    <script src="js/sunburst.js"></script>
+    <script src="js/sunburst.js"></script> -->
 </body>
 </html>

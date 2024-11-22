@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Force-Directed Graph</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="fd.css">
+</head>
+<body>
+    <div id="controls">
+        <label for="yearSelect">Select Year:</label>
+        <select id="yearSelect"></select>
+        <label for="regionSelect">Select Region:</label>
+        <select id="regionSelect">
+            <option value="">All Regions</option>
+        </select>
+        <button id="resetButton">Reset View</button>
+    </div>
+    <div id="container"></div>
+    <div class="tooltip" id="tooltip" style="display:none;"></div>
+    <script src="fd.js"></script>
+</body>
+</html>

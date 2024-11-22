@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Visualization Project - Draft3</title>
+    <link rel="stylesheet" href="timeline.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="timeline.js" defer></script>
+</head>
+<body>
+    <h1><b>Project Phase 1 - Animation(3)</b></h1>
+
+    <!-- pause button -->
+    <div id="control-buttons">
+        <button id="pause-btn">Pause Animation</button>
+    </div>
+
+    <!-- slider -->
+    <div>
+        <label for="date-slider">Select Date Range:</label>
+        <input type="range" id="date-slider" min="2015" max="2024" step="1" value="2015" />
+        <span id="slider-value">2024</span>
+    </div>
+
+    <!-- tooltip div -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <!-- legend div -->
+    <div id="legend" class="legend"></div>
+</body>
+</html>

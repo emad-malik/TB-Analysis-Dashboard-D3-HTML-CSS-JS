@@ -1,20 +1,25 @@
-const container = d3.select("#container");
-const width = window.innerWidth * 3;
-const height = window.innerHeight * 3;
+const fdContainer = document.getElementById("fd-container");
+const fdWidth = fdContainer.offsetWidth;
+const fdHeight = fdContainer.offsetHeight;
 
-const svg = container
+const fdSVG = d3.select("#fd-container")
     .append("svg")
-    .attr("width", width)
-    .attr("height", height)
+    .attr("width", fdWidth)
+    .attr("height", fdHeight)
+    .append("g")
     .call(d3.zoom()
         .scaleExtent([0.1, 10])
         .on("zoom", zoomed))
     .append("g");
 
-const tooltip = d3.select("#tooltip");
+
+
+// Force-directed visualization logic
+
+const fd_tooltip = d3.select("#fd_tooltip");
 
 function zoomed(event) {
-    svg.attr("transform", event.transform);
+    fdSVG.attr("transform", event.transform);
 }
 
 d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
@@ -37,7 +42,7 @@ d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
         .attr("value", d => d);
 
     function renderGraph(selectedYear, selectedRegion) {
-        svg.selectAll("*").remove();
+        fdSVG.selectAll("*").remove();
 
         let filteredData = data;
         if (selectedYear) {
@@ -90,17 +95,17 @@ d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
         const simulation = d3.forceSimulation(nodesArray)
             .force("link", d3.forceLink(links).id(d => d.id).distance(50))
             .force("charge", d3.forceManyBody().strength(-100))
-            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("center", d3.forceCenter(fdWidth / 2, fdHeight / 2))
             .on("tick", ticked);
 
-        const link = svg.append("g")
+        const link = fdSVG.append("g")
             .selectAll("line")
             .data(links)
             .enter()
             .append("line")
             .attr("stroke-width", 0.5);
 
-        const node = svg.append("g")
+        const node = fdSVG.append("g")
             .selectAll("circle")
             .data(nodesArray)
             .enter()
@@ -125,7 +130,7 @@ d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
         }
 
         function showTooltip(event, d) {
-            tooltip.style("display", "block")
+            fd_tooltip.style("display", "block")
                 .html(`
                     <h3>${d.id} (${d.iso2}/${d.iso3})</h3>
                     <div class="metric"><strong>Region:</strong> ${d.region}</div>
@@ -138,12 +143,12 @@ d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
                     <div class="metric"><strong>Mortality Rate:</strong> ${d.mortality_rate.toFixed(2)} per 100k</div>
                     <div class="metric"><strong>TB-HIV Mortality:</strong> ${d.tbhiv_mortality.toLocaleString()}</div>
                 `)
-                .style("left", `${event.pageX + 10}px`)
-                .style("top", `${event.pageY + 10}px`);
+                .style("left", `${Math.min(event.pageX + 10, fdWidth - 150)}px`) 
+                .style("top", `${Math.min(event.pageY + 10, fdHeight - 100)}px`);
         }
 
         function hideTooltip() {
-            tooltip.style("display", "none");
+            fd_tooltip.style("display", "none");
         }
 
         function expandNode(event, d) {

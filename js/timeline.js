@@ -1,5 +1,5 @@
 // Setting up the visualization
-const margins = { top: 20, right: 30, bottom: 40, left: 50 };
+const margins = { top: 20, right: 30, bottom: 60, left: 50 };
 let timelineWidth = document.getElementById("timeline-container").offsetWidth;
 const width = timelineWidth - margins.left - margins.right;
 const height = 400 - margins.top - margins.bottom;
@@ -12,187 +12,117 @@ const timelineSVG = d3.select("#timeline-container")
     .append("g")
     .attr("transform", `translate(${margins.left},${margins.top})`);
 
-// Dynamically adjust the SVG width based on the container's width
-timelineWidth = document.getElementById("timeline-container").offsetWidth;
-        d3.select("#timeline-container")
-        .select("svg")
-        .attr("width", timelineWidth);
+const g = timelineSVG.append("g")
+    .attr("transform", `translate(${margins.left},${margins.top})`);
 
+
+const xScale = d3.scaleLinear().range([0, width]);
+const yScale = d3.scaleLinear().range([height, 0]);
+const sizeScale = d3.scaleLinear().range([5, 20]);
+const color_Scale = d3.scaleOrdinal()
+    .domain(["AMR", "EUR", "EMR", "AFR", "SEA", "WPR"])
+    .range(["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]);
+
+const xAxis = g.append("g").attr("transform", `translate(0,${height})`);
+const yAxis = g.append("g");
 
 const tooltip = d3.select("#timeline_tooltip");
 
-// Loading the data in D3
-d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
-    console.log("Data loaded successfully:", data);
+let yearIndex = 0;
+let isPaused = false;
 
-    // Data parsing
+d3.csv("data/preprocessed_data_tb.csv").then(data => {
     data.forEach(d => {
         d.year = +d.year;
-        d.e_inc_100k = +d.e_inc_100k;
+        d.incidence = +d.e_inc_100k;
+        d.mortality = +d.e_mort_100k;
+        d.population = +d.e_pop_num;
     });
 
-    // Extract unique years for x-axis ticks
-    const uniqueYears = [...new Set(data.map(d => d.year))];
-    const allRegions = [...new Set(data.map(d => d.g_whoregion))];
+    const years = [...new Set(data.map(d => d.year))];
+    const minYear = d3.min(years);
+    const maxYear = d3.max(years);
 
-    // Randomly selecting 10 countries
-    const allCountries = [...new Set(data.map(d => d.country))];
-    const randomCountries = d3.shuffle(allCountries).slice(0, 10);
-    const selectedData = data.filter(d => randomCountries.includes(d.country));
+    d3.select("#year-slider").attr("min", minYear).attr("max", maxYear);
 
-    // Color scale
-    const colorScale = d3.scaleOrdinal()
-        .domain(allRegions)
-        .range(d3.schemeCategory10);
+    xScale.domain([0, 500]);
+    yScale.domain([0, d3.max(data, d => d.mortality)]);
+    sizeScale.domain([0, d3.max(data, d => d.population)]);
 
-    // X and Y axis scales
-    const xScale = d3.scaleLinear()
-        .domain(d3.extent(data, d => d.year))
-        .range([0, width]);
+    xAxis.call(d3.axisBottom(xScale));
+    yAxis.call(d3.axisLeft(yScale));
 
-    const yScale = d3.scaleLinear()
-        .domain([0, d3.max(data, d => d.e_inc_100k)])
-        .range([height, 0]);
+    let selectedRegion = "All";
 
-    // Adding x-axis
-    timelineSVG.append("g")
-        .attr("transform", `translate(0,${height})`)
-        .call(d3.axisBottom(xScale)
-            .tickValues(uniqueYears)
-            .tickFormat(d3.format("d")))
-        .append("text")
-        .attr("class", "axis-label")
-        .attr("x", width / 2)
-        .attr("y", 35)
-        .attr("fill", "black")
-        .style("text-anchor", "middle")
-        .text("Year");
-
-    // Adding y-axis
-    timelineSVG.append("g")
-        .call(d3.axisLeft(yScale))
-        .append("text")
-        .attr("class", "axis-label")
-        .attr("x", -height / 2)
-        .attr("y", -40)
-        .attr("fill", "black")
-        .style("text-anchor", "middle")
-        .attr("transform", "rotate(-90)")
-        .text("TB Incidence Rate (per 100,000)");
-
-    // Line chart
-    const line = d3.line()
-        .x(d => xScale(d.year))
-        .y(d => yScale(d.e_inc_100k));
-
-    // Grouping data by country
-    const groupedby_country = d3.group(selectedData, d => d.country);
-
-    // Append SVG with attributes
-    const paths = timelineSVG.selectAll(".line")
-        .data(groupedby_country)
-        .join("path")
-        .attr("class", "line")
-        .attr("id", d => `line-${d[0]}`)
-        .attr("fill", "none")
-        .attr("stroke", d => colorScale(d[1][0].g_whoregion))
-        .attr("stroke-width", 1.5)
-        .attr("d", d => line(d[1]))
-        .on("mouseover", function(event, d) {
-            tooltip.style("opacity", 1)
-                .html(`Country: <b>${d[0]}</b><br>Region: <b>${d[1][0].g_whoregion}</b>`)
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-
-            d3.select(this).attr("stroke-width", 3);
-        })
-        .on("mousemove", function(event) {
-            tooltip.style("left", (event.pageX + 10) + "px")
-                   .style("top", (event.pageY - 28) + "px");
-        })
-        .on("mouseout", function() {
-            tooltip.style("opacity", 0);
-            d3.select(this).attr("stroke-width", 1.5);
-        });
-
-    // Animation variables
-    let i = 0;
-    let animationInterval;
-    let isPaused = false;
-
-    // Animation function
-    function animated_trend() {
-        if (isPaused) return;
-
-        if (i < uniqueYears.length) {
-            let currentYear = uniqueYears[i];
-
-            groupedby_country.forEach(function(value, key) {
-                const currentData = value.filter(d => d.year <= currentYear);
-
-                d3.select(`#line-${key}`)
-                    .datum(currentData)
-                    .transition()
-                    .duration(500)
-                    .attr("d", line);
-            });
-            i++;
+    const update = year => {
+        let filteredData = data.filter(d => d.year === year && d.mortality >= 10);
+        if (selectedRegion !== "All") {
+            filteredData = filteredData.filter(d => d.g_whoregion === selectedRegion);
         }
-    }
 
-    // Start animation
-    function startAnimation() {
-        animationInterval = d3.interval(animated_trend, 1000);
-    }
+        const circles = g.selectAll("circle").data(filteredData, d => `${d.g_whoregion}-${d.country}`);
 
-    startAnimation();
+        circles.enter()
+            .append("circle")
+            .attr("cx", d => xScale(d.incidence))
+            .attr("cy", d => yScale(d.mortality))
+            .attr("r", d => sizeScale(d.population))
+            .attr("fill", d => color_Scale(d.g_whoregion))
+            .attr("opacity", 0.05)
+            .on("mouseover", function (event, d) {
+                tooltip.style("opacity", 1)
+                    .html(`
+                        <b>Region:</b> ${d.g_whoregion}<br>
+                        <b>Country:</b> ${d.country}<br>
+                        <b>Incidence:</b> ${d.incidence}<br>
+                        <b>Mortality:</b> ${d.mortality}<br>
+                        <b>Population:</b> ${d.population.toLocaleString()}
+                    `)
+                    .style("left", `${event.pageX + 10}px`)
+                    .style("top", `${event.pageY - 28}px`);
+                d3.select(this).attr("stroke", "black").attr("stroke-width", 2);
+            })
+            .on("mouseout", function () {
+                tooltip.style("opacity", 0);
+                d3.select(this).attr("stroke", "none");
+            })
+            .merge(circles)
+            .transition()
+            .duration(500)
+            .attr("cx", d => xScale(d.incidence))
+            .attr("cy", d => yScale(d.mortality))
+            .attr("r", d => sizeScale(d.population))
+            .attr("fill", d => color_Scale(d.g_whoregion));
 
-    // Pause/resume animation
-    d3.select("#pause-btn").on("click", function() {
+        circles.exit().remove();
+    };
+
+    d3.select("#region-filter").on("change", function () {
+        selectedRegion = this.value;
+        const year = +d3.select("#year-slider").property("value");
+        update(year);
+    });
+
+    d3.select("#play-pause-btn").on("click", () => {
         isPaused = !isPaused;
-
-        if (isPaused) {
-            d3.select("#pause-btn").text("Resume Animation");
-            animationInterval.stop();
-        } else {
-            d3.select("#pause-btn").text("Pause Animation");
-            startAnimation();
-        }
+        d3.select("#play-pause-btn").text(isPaused ? "Play" : "Pause");
     });
 
-    // Slider to update chart
-    d3.select("#date-slider").on("input", function() {
-        const sliderValue = +this.value;
-        d3.select("#slider-value").text(sliderValue);
-
-        paths.each(function(d) {
-            const filteredData = d[1].filter(d => d.year <= sliderValue);
-
-            d3.select(this)
-                .datum(filteredData)
-                .transition()
-                .duration(500)
-                .attr("d", line);
-        });
+    d3.select("#year-slider").on("input", function () {
+        const year = +this.value;
+        d3.select("#year-display").text(year);
+        update(year);
     });
 
-    // Zoom functionality
-    const zoom = d3.zoom()
-        .scaleExtent([1, 10])
-        .on("zoom", function(event) {
-            timelineSVG.attr("transform", event.transform);
-        });
-        timelineSVG.call(zoom);
+    d3.interval(() => {
+        if (isPaused) return;
+        yearIndex = (yearIndex + 1) % years.length;
+        const year = years[yearIndex];
+        d3.select("#year-slider").property("value", year);
+        d3.select("#year-display").text(year);
+        update(year);
+    }, 1000);
 
-    // Legend
-    const legend = d3.select("#legend");
-
-    allRegions.forEach(function(region) {
-        legend.append("div")
-            .attr("class", "legend-item")
-            .html(`<span style="background-color: ${colorScale(region)};"></span> ${region}`);
-    });
-
-}).catch(function(error) {
-    console.error("Error loading data:", error);
+    update(minYear);
 });
+

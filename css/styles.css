@@ -43,10 +43,12 @@ header {
     display: flex;
     justify-content: space-between;
     gap: 10px;
+    margin: 10px 0;
 }
 
 .half {
-    flex: 0 0 48%;
+    flex: 1;
+    height: 400px;
 }
 
 .axis-label {
@@ -54,28 +56,39 @@ header {
     font-weight: bold;
 }
 
-#control-buttons {
-    margin-top: 20px;
+
+
+.tree_tooltip {
+    position: absolute;
+    text-align: center;
+    width: auto;
+    height: auto;
+    padding: 8px;
+    background: lightgray;
+    border: 1px solid gray;
+    border-radius: 4px;
+    pointer-events: none;
+    font-size: 12px;
 }
 
-#pause-btn {
-    padding: 10px;
-    background-color: steelblue;
-    color: white;
-    border: none;
-    cursor: pointer;
+/* timeline css*/
+.timeline {
+    width: 100%; /* Full width of the container */
+    margin: 20px auto; /* Center the timeline vertically with a margin */
+    padding: 10px; /* Optional padding */
+    background-color: #fff; /* Ensure consistent theme */
+    border: 1px solid #ddd; /* Add a border to the timeline */
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Subtle shadow for emphasis */
 }
 
-#pause-btn:hover {
-    background-color: darkblue;
+#timeline-container {
+    width: 100%; /* Full width */
+    height: 400px; /* Fixed height for the visualization */
+    margin: 0 auto; /* Center horizontally */
 }
 
-#date-slider {
-    width: 20%;
-    margin-top: 10px;
-}
-
-.tooltip {
+.timeline_tooltip {
     position: absolute;
     padding: 8px;
     background-color: white;
@@ -87,39 +100,174 @@ header {
     transition: opacity 0.2s;
 }
 
+#controls {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.btn {
+    margin: 0 5px;
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+    color: #fff;
+    background-color: #007bff;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.legend {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.legend div {
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+}
+
+.legend div span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+
+
+
+
+/* tree css */
+
+/* .highlighted {
+    stroke: black;
+    stroke-width: 2px;
+}
+
 .legend {
     font-size: 12px;
 }
 
-.legend rect {
-    width: 15px;
-    height: 15px;
-    margin-right: 5px;
+.dropdown {
+    margin: 20px;
+}
+ */
+
+
+
+.tree_node {
+    stroke: #fff;
+    stroke-width: 1px;
 }
 
-.legend-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
+#tree-container,
+#map-container {
+    border: 1px solid #ddd; /* Optional border for separation */
+    border-radius: 5px; /* Rounded corners */
+    background-color: #fff; /* Match theme with the rest of the dashboard */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Subtle shadow for emphasis */
 }
 
+.country {
+    stroke: #ccc;
+    stroke-width: 0.5px;
+}
 
-.timeline {
-    width: 100%; /* Use the full width of the parent container */
-    margin: 20px auto; /* Center the timeline horizontally */
-    padding: 10px; /* Optional padding for better spacing */
-    border: 1px solid #ddd; /* Ensure consistent styling */
-    background-color: #fff; /* Match the dashboard theme */
+.highlight {
+    stroke: #000;
+    stroke-width: 2px;
+} /* Highlighted country border */
+
+/* .legend {
+    font-size: 12px;
+} */
+
+.map_tooltip {
+    position: absolute;
+    background-color: white;
+    padding: 5px;
+    border: 1px solid #ddd;
     border-radius: 5px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    display: flex; /* Allow alignment control */
-    justify-content: center; /* Center the content horizontally */
-    align-items: center; /* Center the content vertically */
+    pointer-events: none;
 }
 
-#timeline-container {
-    width: 90%; /* Adjust width relative to the container for padding */
-    height: 400px; /* Maintain consistent height */
-    margin: 0 auto; /* Center within the timeline block */
-    overflow: hidden; /* Prevent overflow if elements extend */
+.info-panel {
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 10px;
+    width: 250px;
+    display: none;
+    z-index: 10;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+
+/* fd elements */
+#fd-container,
+#sunburst-container {
+    border: 1px solid #ddd; /* Optional border for separation */
+    border-radius: 5px; /* Rounded corners */
+    background-color: #fff; /* Match the theme */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+
+/* circle { 
+    fill: #69b3a2; 
+    stroke: #333; 
+    stroke-width: 1px; 
+    cursor: pointer; 
+    transition: all 0.3s ease;
+} */
+line { 
+    stroke: #999; 
+    stroke-opacity: 0.4; 
+}
+.fd_tooltip {
+    position: fixed;
+    background-color: rgba(255,255,255,0.9);
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    pointer-events: none;
+    max-width: 300px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1001;
+    font-size: 14px;
+}
+.fd_tooltip .metric {
+    margin-bottom: 5px;
+}
+.fd_tooltip .metric strong {
+    display: inline-block;
+    width: 120px;
+}
+
+
+#sunburst-container {
+    background-color: #f9f9f9; /* Optional background color */
+}
+
+.chart {
+    display: block;
+    margin: auto;
+}
+
+text {
+    font-size: 12px;
+    text-anchor: middle;
+}
+
+#sb_tooltip {
+    position: absolute;
+    background-color: white;
+    padding: 10px;
+    border: 1px solid black;
+    display: none;
+    pointer-events: none;
 }

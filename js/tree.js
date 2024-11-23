@@ -1,16 +1,18 @@
-// Setting up the visualization
-const margins = { top: 20, right: 30, bottom: 40, left: 50 };
-const width = 800 - margins.left - margins.right;
-const height = 400 - margins.top - margins.bottom;
+// Setting the dimensions dynamically for the treemap
+const treeWidth = document.getElementById("tree-container").offsetWidth;
+const treeHeight = 400; 
+const tree_margins = { top: 20, right: 30, bottom: 40, left: 50 };
 
-const svg = d3.select("body")
+// Create SVG for the treemap
+const treeSVG = d3.select("#tree-container")
     .append("svg")
-    .attr("width", width + margins.right + margins.left)
-    .attr("height", height + margins.top + margins.bottom)
+    .attr("width", treeWidth)
+    .attr("height", treeHeight)
     .append("g")
-    .attr("transform", `translate(${margins.left},${margins.top})`);
+    .attr("transform", `translate(${tree_margins.left},${tree_margins.top})`);
 
-const tooltip = d3.select("#tooltip");
+
+const tree_tooltip = d3.select("#tree_tooltip");
 
 // Loading the data in D3
 d3.csv("data/preprocessed_data_tb.csv").then(function (data) {
@@ -51,7 +53,7 @@ d3.csv("data/preprocessed_data_tb.csv").then(function (data) {
 
         // D3 treemap layout
         const treemapLayout = d3.treemap()
-            .size([width, height])
+            .size([treeWidth - tree_margins.left - tree_margins.right, treeHeight - tree_margins.top - tree_margins.bottom])
             .padding(1);
         treemapLayout(root);
 
@@ -64,17 +66,17 @@ d3.csv("data/preprocessed_data_tb.csv").then(function (data) {
         const legendHeight = 20;
 
         // Append a group for the legend
-        const legend = d3.select("body")
-            .append("svg")
-            .attr("width", legendWidth + margins.left + margins.right)
-            .attr("height", legendHeight + 50)
-            .append("g")
-            .attr("transform", `translate(${margins.left}, 20)`);
+        // const legend = d3.select("body")
+        //     .append("svg")
+        //     .attr("width", legendWidth + tree_margins.left + tree_margins.right)
+        //     .attr("height", legendHeight + 50)
+        //     .append("g")
+        //     .attr("transform", `translate(${tree_margins.left}, 20)`);
 
-        // Color scale for legend
-        const legendScale = d3.scaleLinear()
-            .domain(colorScale.domain())
-            .range([0, legendWidth]);
+        // // Color scale for legend
+        // const legendScale = d3.scaleLinear()
+        //     .domain(colorScale.domain())
+        //     .range([0, legendWidth]);
 
         const gradient = legend.append("defs")
             .append("linearGradient")
@@ -111,21 +113,21 @@ d3.csv("data/preprocessed_data_tb.csv").then(function (data) {
             .attr("class", "legend-axis");
 
         // Data binding for nodes
-        const rect_nodes = svg.selectAll("rect")
+        const rect_nodes = treeSVG.selectAll("rect")
             .data(root.leaves(), d => d.data.name);
 
         // Joining nodes with transitions
         rect_nodes.join(
             enter => enter.append("rect")
-                .attr("class", "node")
+                .attr("class", "tree_node")
                 .attr("x", d => d.x0)
                 .attr("y", d => d.y0)
                 .attr("width", d => d.x1 - d.x0)
                 .attr("height", d => d.y1 - d.y0)
                 .attr("fill", d => colorScale(d.data.e_inc_100k))
                 .on("mouseover", (event, d) => {
-                    tooltip.transition().duration(200).style("opacity", 1);
-                    tooltip.html(`
+                    tree_tooltip.transition().duration(200).style("opacity", 1);
+                    tree_tooltip.html(`
                         <b>Country:</b> ${d.data.country}<br>
                         <b>Region:</b> ${d.data.g_whoregion}<br>
                         <b>Incidence:</b> ${d.data.e_inc_num}<br>
@@ -135,7 +137,7 @@ d3.csv("data/preprocessed_data_tb.csv").then(function (data) {
                         .style("top", (event.pageY - 28) + "px");
                 })
                 .on("mouseout", () => {
-                    tooltip.transition().duration(200).style("opacity", 0);
+                    tree_tooltip.transition().duration(200).style("opacity", 0);
                 })
                 .on("click", (event, d) => {
                     // Highlight clicked node
@@ -155,7 +157,7 @@ d3.csv("data/preprocessed_data_tb.csv").then(function (data) {
         );
 
         // Add/update text labels
-        const labels = svg.selectAll("text")
+        const labels = treeSVG.selectAll("text")
             .data(root.leaves(), d => d.data.name);
 
         labels.join(

@@ -24,12 +24,21 @@
     <!-- ELEMENTS FOR TIMELINE VISUALIZATION -->
     <!-- Timeline Visualization -->
     <div id="timeline" class="timeline">
-        <div id="timeline-container"></div>
+        <div id="timeline-container">
+            <div class="legend">
+                <div><span style="background: #1f77b4;"></span> AMR</div>
+                <div><span style="background: #ff7f0e;"></span> EUR</div>
+                <div><span style="background: #2ca02c;"></span> EMR</div>
+                <div><span style="background: #d62728;"></span> AFR</div>
+                <div><span style="background: #9467bd;"></span> SEA</div>
+                <div><span style="background: #8c564b;"></span> WPR</div>
+            </div>
+        </div>
     </div>
     
-    <!-- tooltip div -->
+    
+    <!-- Tooltip div for Timeline -->
     <div class="timeline_tooltip" id="timeline_tooltip"></div>
-
 
     <!-- Row of two visualizations: Tree and Map -->
     <div class="visualization-row">
@@ -37,11 +46,20 @@
         <div id="map-container" class="visualization half"></div>
     </div>
 
+    <!-- Tooltip div for Tree -->
+    <div class="tree_tooltip" id="tree_tooltip"></div>
+
     <!-- Row of two visualizations: FD and Sunburst -->
     <div class="visualization-row">
         <div id="fd-container" class="visualization half"></div>
         <div id="sunburst-container" class="visualization half"></div>
     </div>
+
+    <!-- Tooltip div for Force-Directed Graph -->
+    <div class="fd_tooltip" id="fd_tooltip"></div>
+
+    <!-- Tooltip div for Sunburst -->
+    <div class="sb_tooltip" id="sb_tooltip"></div>
 
     <script>
         d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
@@ -52,7 +70,7 @@
 
         d3.select("#stat1").text(`Total Incidence: ${totalIncidence}`);
         d3.select("#stat2").text(`Avg Rate: ${avgRate.toFixed(2)} per 100k`);
-        d3.select("#stat3").text(`Mortality Rate: ${mortality_rate}`);
+        d3.select("#stat3").text(`Mortality Rate: ${mortality_rate.toFixed(2)} per 100k`);
         d3.select("#stat4").text(`Countries: ${countries}`);
 });
 

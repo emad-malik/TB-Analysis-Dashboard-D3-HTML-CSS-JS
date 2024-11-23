@@ -1,10 +1,21 @@
-const width = 1200, height = 600;
+// Setting the dimensions dynamically for the map chart
+const mapWidth = document.getElementById("map-container").offsetWidth;
+const mapHeight = 400; // Fixed height for consistency
+const map_margins = { top: 20, right: 30, bottom: 40, left: 50 };
+
+// Create SVG for the map chart
+const mapSVG = d3.select("#map-container")
+    .append("svg")
+    .attr("width", mapWidth)
+    .attr("height", mapHeight)
+    .append("g")
+    .attr("transform", `translate(${map_margins.left},${map_margins.top})`);
+
 
 // Set up the map projection and path
 const projection = d3.geoMercator().scale(150).translate([width / 2, height / 1.5]);
 const path = d3.geoPath().projection(projection);
 
-const svg = d3.select("svg");
 
 // Set up color scale
 const colorScale = d3.scaleSequential(d3.interpolateReds)
@@ -14,7 +25,7 @@ const colorScale = d3.scaleSequential(d3.interpolateReds)
 const legendHeight = 200;
 const legendWidth = 20;
 
-const legend = svg.append("g")
+const legend = mapSVG.append("g")
     .attr("class", "legend")
     .attr("transform", `translate(${width - 50}, 50)`); // Move legend to the right side
 
@@ -54,7 +65,7 @@ Promise.all([
     const dataMap = new Map(csvData.map(d => [d.iso3, d]));
 
     // Create a group element for all map elements (to apply zoom behavior)
-    const mapGroup = svg.append("g");
+    const mapGroup = mapSVG.append("g");
 
     // Draw map paths within the group
     mapGroup.selectAll("path")
@@ -81,7 +92,7 @@ Promise.all([
                 Mortality Excluding TB-HIV (per 100k): ${data ? data.e_mort_exc_tbhiv_100k : "N/A"}<br>
             `;
 
-            d3.select("body").append("div").attr("class", "tooltip")
+            d3.select("body").append("div").attr("class", "map_tooltip")
                 .html(tooltipHtml)
                 .style("left", (event.pageX + 5) + "px")
                 .style("top", (event.pageY - 28) + "px");
@@ -89,7 +100,7 @@ Promise.all([
             d3.select(this).attr("fill", "orange");
         })
         .on("mousemove", function(event) {
-            d3.select(".tooltip")
+            d3.select(".map_tooltip")
                 .style("left", (event.pageX + 5) + "px")
                 .style("top", (event.pageY - 28) + "px");
         })
@@ -99,7 +110,7 @@ Promise.all([
                 const value = dataMap.get(iso3) ? +dataMap.get(iso3).e_inc_100k : null;
                 return value ? colorScale(value) : "#eee";
             });
-            d3.select(".tooltip").remove();
+            d3.select(".map_tooltip").remove();
         })
         .on("click", function(event, d) {
             const iso3 = d.properties.ISO_A3;
@@ -133,6 +144,6 @@ Promise.all([
             mapGroup.selectAll("path").attr("d", path);
         });
 
-    svg.call(zoom);  // Apply the zoom behavior to the SVG container
+    mapSVG.call(zoom);  // Apply the zoom behavior to the SVG container
 
 }).catch(error => console.error(error));

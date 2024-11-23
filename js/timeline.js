@@ -1,18 +1,25 @@
 // Setting up the visualization
 const margins = { top: 20, right: 30, bottom: 40, left: 50 };
-const width = 800 - margins.left - margins.right;
+let timelineWidth = document.getElementById("timeline-container").offsetWidth;
+const width = timelineWidth - margins.left - margins.right;
 const height = 400 - margins.top - margins.bottom;
 
+// Create SVG for timeline visualization
+const timelineSVG = d3.select("#timeline-container")
+    .append("svg")
+    .attr("width", width + margins.left + margins.right) 
+    .attr("height", height + margins.top + margins.bottom)
+    .append("g")
+    .attr("transform", `translate(${margins.left},${margins.top})`);
 
-// load the timeline visualization in dboard
-const svg = d3.select("#timeline-container")
-        .append("svg")
-        .attr("width", width + margins.right + margins.left)
-        .attr("height", height + margins.top + margins.bottom)
-        .append("g")
-        .attr("transform", `translate(${margins.left},${margins.top})`);
+// Dynamically adjust the SVG width based on the container's width
+timelineWidth = document.getElementById("timeline-container").offsetWidth;
+        d3.select("#timeline-container")
+        .select("svg")
+        .attr("width", timelineWidth);
 
-const tooltip = d3.select("#tooltip");
+
+const tooltip = d3.select("#timeline_tooltip");
 
 // Loading the data in D3
 d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
@@ -48,7 +55,7 @@ d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
         .range([height, 0]);
 
     // Adding x-axis
-    svg.append("g")
+    timelineSVG.append("g")
         .attr("transform", `translate(0,${height})`)
         .call(d3.axisBottom(xScale)
             .tickValues(uniqueYears)
@@ -62,7 +69,7 @@ d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
         .text("Year");
 
     // Adding y-axis
-    svg.append("g")
+    timelineSVG.append("g")
         .call(d3.axisLeft(yScale))
         .append("text")
         .attr("class", "axis-label")
@@ -82,7 +89,7 @@ d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
     const groupedby_country = d3.group(selectedData, d => d.country);
 
     // Append SVG with attributes
-    const paths = svg.selectAll(".line")
+    const paths = timelineSVG.selectAll(".line")
         .data(groupedby_country)
         .join("path")
         .attr("class", "line")
@@ -173,9 +180,9 @@ d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
     const zoom = d3.zoom()
         .scaleExtent([1, 10])
         .on("zoom", function(event) {
-            svg.attr("transform", event.transform);
+            timelineSVG.attr("transform", event.transform);
         });
-        svg.call(zoom);
+        timelineSVG.call(zoom);
 
     // Legend
     const legend = d3.select("#legend");

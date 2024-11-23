@@ -1,18 +1,18 @@
 // Set dimensions
-const width = 800;
-const radius = width / 2;
+const sunburstWidth = document.getElementById("sunburst-container").offsetWidth;
+const radius = sunburstWidth / 2;
 
 // Create SVG container
-const svg = d3.select("#chart")
+const sunburstSVG = d3.select("#sunburst-container")
     .append("svg")
-    .attr("width", width)
-    .attr("height", width)
-    .attr("class", "chart")
+    .attr("width", sunburstWidth)
+    .attr("height", radius * 1.5)
     .append("g")
     .attr("transform", `translate(${radius},${radius})`);
 
+
 // Tooltip for hovering
-const tooltip = d3.select("#tooltip");
+const sb_tooltip = d3.select("#sb_tooltip");
 
 // Color scale (for regions and categories)
 const color = d3.scaleOrdinal(d3.schemeCategory10);
@@ -63,7 +63,7 @@ d3.csv("data/preprocessed_data_tb.csv").then(data => {
     partition(root);
 
     // Add paths for each segment
-    const path = svg.selectAll("path")
+    const path = sunburstSVG.selectAll("path")
         .data(root.descendants())
         .join("path")
         .attr("d", arc)
@@ -73,18 +73,18 @@ d3.csv("data/preprocessed_data_tb.csv").then(data => {
             d3.select(this).attr("opacity", 0.7);
 
             // Show tooltip
-            tooltip.style("display", "inline-block")
+            sb_tooltip.style("display", "inline-block")
                 .html(`<strong>${d.data.name}</strong><br>Value: ${d.value}`);
         })
         .on("mousemove", function (event) {
-            tooltip.style("top", (event.pageY + 5) + "px")
+            sb_tooltip.style("top", (event.pageY + 5) + "px")
                 .style("left", (event.pageX + 5) + "px");
         })
         .on("mouseout", function () {
             d3.select(this).attr("opacity", 1);
 
             // Hide tooltip
-            tooltip.style("display", "none");
+            sb_tooltip.style("display", "none");
         })
         .on("click", function (event, d) {
             // Zoom into the clicked segment
@@ -94,7 +94,7 @@ d3.csv("data/preprocessed_data_tb.csv").then(data => {
         .text(d => `${d.data.name}: ${d.value}`);
 
     // Add labels for each segment (display on higher-level nodes and avoid overlap)
-    svg.selectAll("text")
+    sunburstSVG.selectAll("text")
         .data(root.descendants().filter(d => d.depth && (d.x1 - d.x0) > 0.03))
         .join("text")
         .attr("transform", d => {
@@ -114,14 +114,14 @@ d3.csv("data/preprocessed_data_tb.csv").then(data => {
 
         partition(newRoot);
 
-        svg.selectAll("path")
+        sunburstSVG.selectAll("path")
             .data(newRoot.descendants())
             .join("path")
             .transition().duration(500)
             .attr("d", arc)
             .attr("fill", d => color(d.depth));
 
-        svg.selectAll("text")
+        sunburstSVG.selectAll("text")
             .data(newRoot.descendants().filter(d => d.depth && (d.x1 - d.x0) > 0.03))
             .join("text")
             .transition().duration(500)

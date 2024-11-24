@@ -1,49 +1,42 @@
-<!DOCTYPE html>
+=<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TB Analysis Dashboard</title>
+    <title>TB Analysis Dashboard - D3</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
     <header>
-        <h1>TB Analysis</h1>
+        <h1><b>Tuberculosis Analysis</b></h1>
+        <h2>Join Us and explore global trends into Tuberculosis, a fatal disease.</h2>
     </header>
 
     <!-- Stats Row -->
     <div class="stats-row">
         <div class="stat-card" id="stat1">Total Incidence</div>
-        <div class="stat-card" id="stat2">Average Rate (per 100k)</div>
+        <div class="stat-card" id="stat2">Average Incidence Rate (per 100k)</div>
         <div class="stat-card" id="stat3">Mortality Rate (per 100k)</div>
-        <div class="stat-card" id="stat4">Countries Analyzed</div>
+        <div class="stat-card" id="stat4">Case Fatality Ratio</div>
     </div>
-
 
     <!-- ELEMENTS FOR TIMELINE VISUALIZATION -->
-    <!-- Timeline Visualization -->
     <div id="timeline" class="timeline">
-        <div id="timeline-container">
+        <a href="burden_estimate/timeline.html" id="timeline-container">
             <div class="legend">
-                <div><span style="background: #1f77b4;"></span> AMR</div>
-                <div><span style="background: #ff7f0e;"></span> EUR</div>
-                <div><span style="background: #2ca02c;"></span> EMR</div>
-                <div><span style="background: #d62728;"></span> AFR</div>
-                <div><span style="background: #9467bd;"></span> SEA</div>
-                <div><span style="background: #8c564b;"></span> WPR</div>
+                
             </div>
-        </div>
+        </a>
     </div>
-    
-    
+
     <!-- Tooltip div for Timeline -->
     <div class="timeline_tooltip" id="timeline_tooltip"></div>
 
     <!-- Row of two visualizations: Tree and Map -->
     <div class="visualization-row">
-        <div id="tree-container" class="visualization half"></div>
-        <div id="map-container" class="visualization half"></div>
+        <a href="burden_estimate/tree.html" id="tree-container" class="visualization half"></a>
+        <a href="burden_estimate/mapchart.html" id="map-container" class="visualization half"></a>
     </div>
 
     <!-- Tooltip div for Tree -->
@@ -51,8 +44,8 @@
 
     <!-- Row of two visualizations: FD and Sunburst -->
     <div class="visualization-row">
-        <div id="fd-container" class="visualization half"></div>
-        <div id="sunburst-container" class="visualization half"></div>
+        <a href="burden_estimate/fd.html" id="fd-container" class="visualization half"></a>
+        <a href="burden_estimate/sunburst.html" id="sunburst-container" class="visualization half"></a>
     </div>
 
     <!-- Tooltip div for Force-Directed Graph -->
@@ -66,21 +59,19 @@
         const totalIncidence = d3.sum(data, d => d.e_inc_num);
         const avgRate = d3.mean(data, d => d.e_inc_100k);
         const mortality_rate = d3.mean(data, d => d.e_mort_exc_tbhiv_100k);
-        const countries = new Set(data.map(d => d.country)).size;
+        const avgCFR = d3.mean(data, d => +d.cfr);
 
         d3.select("#stat1").text(`Total Incidence: ${totalIncidence}`);
         d3.select("#stat2").text(`Avg Rate: ${avgRate.toFixed(2)} per 100k`);
         d3.select("#stat3").text(`Mortality Rate: ${mortality_rate.toFixed(2)} per 100k`);
-        d3.select("#stat4").text(`Countries: ${countries}`);
-});
-
+        d3.select("#stat4").text(`Case Fatality Ratio: ${(avgCFR * 100).toFixed(2)}%`);
+    });
     </script>
 
-    <!-- Import scripts for visualizations -->
     <script src="js/timeline.js"></script>
     <script src="js/tree.js"></script>
     <script src="js/mapchart.js"></script>
     <script src="js/fd.js"></script>
-    <script src="js/sunburst.js"></script>
+    <script src="js/sunburst.js"></script> 
 </body>
 </html>

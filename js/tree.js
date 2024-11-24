@@ -1,7 +1,7 @@
 // Setting the dimensions dynamically for the treemap
-const treeWidth = document.getElementById("tree-container").offsetWidth;
-const treeHeight = 400; 
-const tree_margins = { top: 20, right: 30, bottom: 40, left: 50 };
+const treeWidth = document.getElementById("tree-container").offsetWidth + 50;
+const treeHeight = 400;
+const tree_margins = { top: 20, right: 30, bottom: 40, left: 30 };
 
 // Create SVG for the treemap
 const treeSVG = d3.select("#tree-container")
@@ -10,7 +10,6 @@ const treeSVG = d3.select("#tree-container")
     .attr("height", treeHeight)
     .append("g")
     .attr("transform", `translate(${tree_margins.left},${tree_margins.top})`);
-
 
 const tree_tooltip = d3.select("#tree_tooltip");
 
@@ -22,19 +21,26 @@ d3.csv("data/preprocessed_data_tb.csv").then(function (data) {
     data.forEach(d => {
         d.e_inc_num = +d.e_inc_num;
         d.e_inc_100k = +d.e_inc_100k;
+        d.year = +d.year;  // Ensure year is a number for filtering
     });
 
     // Filter menu based on regions
-    const regions = Array.from(new Set(data.map(d => d.g_whoregion)));
-    const dropdown = d3.select("#regionSelect");
-    regions.forEach(region => {
-        dropdown.append("option").text(region).attr("value", region);
+    const regionDropdown = d3.select("#region-select");
+
+    // Filter menu based on years
+    const years = Array.from(new Set(data.map(d => d.year))).sort((a, b) => a - b);
+    const yearDropdown = d3.select("#year-select");
+    years.forEach(year => {
+        yearDropdown.append("option").text(year).attr("value", year);
     });
 
     // Function to load the treemap
-    function loadTreemap(region) {
-        // Filter data based on region
-        const filteredData = region === "All" ? data : data.filter(d => d.g_whoregion === region);
+    function loadTreemap(region, year) {
+        // Filter data based on region and year
+        const filteredData = data.filter(d => 
+            (region === "All" || d.g_whoregion === region) && 
+            (!year || d.year === year)
+        );
 
         // Creating hierarchical data structure
         const nestedData = d3.group(filteredData, d => d.g_whoregion, d => d.country);
@@ -48,69 +54,18 @@ d3.csv("data/preprocessed_data_tb.csv").then(function (data) {
                 }))
             }))
         })
-            .sum(d => d.e_inc_num) // Rectangles size based on incidence
-            .sort((a, b) => b.value - a.value);
+        .sum(d => d.e_inc_num) // Rectangles size based on incidence
+        .sort((a, b) => b.value - a.value);
 
         // D3 treemap layout
         const treemapLayout = d3.treemap()
-            .size([treeWidth - tree_margins.left - tree_margins.right, treeHeight - tree_margins.top - tree_margins.bottom])
+            .size([treeWidth - tree_margins.left - tree_margins.right + 50, treeHeight - tree_margins.top - tree_margins.bottom])
             .padding(1);
         treemapLayout(root);
 
         // Colors based on per 100k column
         const colorScale = d3.scaleSequential(d3.interpolateReds)
             .domain([0, d3.max(filteredData, d => d.e_inc_100k)]);
-
-        // Adding a legend
-        const legendWidth = 200;
-        const legendHeight = 20;
-
-        // Append a group for the legend
-        // const legend = d3.select("body")
-        //     .append("svg")
-        //     .attr("width", legendWidth + tree_margins.left + tree_margins.right)
-        //     .attr("height", legendHeight + 50)
-        //     .append("g")
-        //     .attr("transform", `translate(${tree_margins.left}, 20)`);
-
-        // // Color scale for legend
-        // const legendScale = d3.scaleLinear()
-        //     .domain(colorScale.domain())
-        //     .range([0, legendWidth]);
-
-        const gradient = legend.append("defs")
-            .append("linearGradient")
-            .attr("id", "legend-gradient")
-            .attr("x1", "0%")
-            .attr("x2", "100%")
-            .attr("y1", "0%")
-            .attr("y2", "0%");
-
-        gradient.append("stop")
-            .attr("offset", "0%")
-            .attr("stop-color", d3.interpolateReds(0));
-
-        gradient.append("stop")
-            .attr("offset", "100%")
-            .attr("stop-color", d3.interpolateReds(1));
-
-        // Draw the rectangle for the gradient
-        legend.append("rect")
-            .attr("x", 0)
-            .attr("y", 0)
-            .attr("width", legendWidth)
-            .attr("height", legendHeight)
-            .style("fill", "url(#legend-gradient)");
-
-        // Legend axis
-        const legendAxis = d3.axisBottom(legendScale)
-            .ticks(5)
-            .tickFormat(d3.format(".0f"));
-
-        legend.append("g")
-            .attr("transform", `translate(0, ${legendHeight})`)
-            .call(legendAxis)
-            .attr("class", "legend-axis");
 
         // Data binding for nodes
         const rect_nodes = treeSVG.selectAll("rect")
@@ -133,8 +88,8 @@ d3.csv("data/preprocessed_data_tb.csv").then(function (data) {
                         <b>Incidence:</b> ${d.data.e_inc_num}<br>
                         <b>Rate:</b> ${d.data.e_inc_100k} per 100k
                     `)
-                        .style("left", (event.pageX + 10) + "px")
-                        .style("top", (event.pageY - 28) + "px");
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px");
                 })
                 .on("mouseout", () => {
                     tree_tooltip.transition().duration(200).style("opacity", 0);
@@ -178,13 +133,21 @@ d3.csv("data/preprocessed_data_tb.csv").then(function (data) {
         );
     }
 
-    // Initial treemap with all regions
-    loadTreemap("All");
+    // Initial treemap with all regions and no year filter
+    loadTreemap("All", null);
 
-    // Update on dropdown change
-    dropdown.on("change", function () {
+    // Update on region dropdown change
+    regionDropdown.on("change", function () {
         const selectedRegion = this.value;
-        loadTreemap(selectedRegion);
+        const selectedYear = yearDropdown.property("value");
+        loadTreemap(selectedRegion, selectedYear);
+    });
+
+    // Update on year dropdown change
+    yearDropdown.on("change", function () {
+        const selectedYear = this.value;
+        const selectedRegion = regionDropdown.property("value");
+        loadTreemap(selectedRegion, selectedYear);
     });
 }).catch(error => {
     console.error("Error loading the data:", error);

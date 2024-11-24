@@ -113,30 +113,15 @@ d3.csv("data/preprocessed_data_tb.csv").then(data => {
         circles.exit().remove();
     };
 
-    // Region filter change handler
-    d3.select("#region-select").on("change", function () {
-        selectedRegion = this.value;
-        const year = +d3.select("#year-select").property("value");
-        update(year);
-    });
-
-    // Year filter change handler
-    d3.select("#year-select").on("change", function () {
-    const year = +this.value;  
-    d3.select("#year-display").text(year); 
-    yearIndex = years.indexOf(year);  
-    update(year);  
-    isPaused = true;  
-});
-
-// Year change interval for animation
-d3.interval(() => {
-    if (isPaused) return; 
-    yearIndex = (yearIndex + 1) % years.length; 
-    const year = years[yearIndex]; 
-    d3.select("#year-display").text(year);  
-    update(year);  
-}, 1000);
+  
+    // Year change interval for animation
+    d3.interval(() => {
+        if (isPaused) return; 
+        yearIndex = (yearIndex + 1) % years.length; 
+        const year = years[yearIndex]; 
+        d3.select("#year-display").text(year);  
+        update(year);  
+    }, 1000);
 
 // Initial update for the min year
 update(minYear);

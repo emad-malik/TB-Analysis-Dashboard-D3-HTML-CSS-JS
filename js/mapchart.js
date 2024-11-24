@@ -13,7 +13,7 @@ const mapSVG = d3.select("#map-container")
 
 
 // Set up the map projection and path
-const projection = d3.geoMercator().scale(150).translate([width / 2, height / 1.5]);
+const projection = d3.geoMercator().scale(150).translate([mapWidth / 2, mapHeight / 1.5]);
 const path = d3.geoPath().projection(projection);
 
 
@@ -27,7 +27,7 @@ const legendWidth = 20;
 
 const legend = mapSVG.append("g")
     .attr("class", "legend")
-    .attr("transform", `translate(${width - 50}, 50)`); // Move legend to the right side
+    .attr("transform", `translate(${mapWidth - 50}, 50)`); // Move legend to the right side
 
 const legendScale = d3.scaleLinear()
     .domain(colorScale.domain())
@@ -48,12 +48,6 @@ legend.append("g")
     .attr("transform", `translate(${legendWidth}, 0)`)
     .call(legendAxis);
 
-legend.append("text")
-    .attr("x", -50)
-    .attr("y", -10)
-    .style("font-size", "14px")
-    .style("text-anchor", "middle")
-    .text("TB Incidence (per 100k)");
 
 // Load GeoJSON and CSV data
 Promise.all([

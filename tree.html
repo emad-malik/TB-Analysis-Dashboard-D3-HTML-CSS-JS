@@ -1,27 +1,21 @@
 <!DOCTYPE html>
-<html lang= "en">
+<html lang="en">
 <head>
-    <meta charset= "UTF-8">
-    <meta name= "viewport" content= "width= device-width, initial-scale= 1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tree Visualization</title>
-    <script src= "https://d3js.org/d3.v7.min.js"></script>
-    <!-- basic styling for starters -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        svg
-        {
+        svg {
             font-family: Arial, Helvetica, sans-serif;
         }
-        .node 
-        {
+        .node {
             stroke: #fff;
             stroke-width: 1px;
         }
-        .tooltip 
-        {
+        .tooltip {
             position: absolute;
             text-align: center;
-            width: auto;
-            height: auto;
             padding: 8px;
             background: lightgray;
             border: 1px solid gray;
@@ -35,84 +29,95 @@
         }
         p {
             text-align: center;
-            margin: 10px;
+            margin: 10px auto;
             font-size: 16px;
             max-width: 80%;
-            margin-left: auto;
-            margin-right: auto;
         }
-        .highlighted
-        {
+        .highlighted {
             stroke: black;
             stroke-width: 2px;
         }
-        .legend
-        {
-            font-size: 12px;
-        }
-        .dropdown
-        {
+        .dropdown {
             margin: 20px;
+            text-align: center;
         }
-     </style>
-    
+        select {
+            padding: 8px 12px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: white;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
-    <h1><b>Tree Hierarchical Visualization</h1></b>
-    <p>This visualization displays a tree-based hierarchical view of global tuberculosis (TB) incidence data, categorized by regions and countries. The size of each rectangle corresponds to the number of TB incidents in each country, while the color intensity represents the incidence rate per 100,000 people. You can select a specific region from the dropdown menu to filter the data and explore the TB incidence rates for different regions. Hovering over each rectangle shows detailed information about the country’s TB statistics, and clicking on a rectangle highlights the selected country.</p>
-    <!-- dropdown filter div -->
-    <div class= "dropdown">
-        <label for= "regionSelect">Select Region: </label>
-        <select id= "regionSelect">
-            <option value= "All">All Regions</option>
+    <h1><b>Tree Hierarchical Visualization</b></h1>
+    <p>
+        This visualization displays a tree-based hierarchical view of global tuberculosis (TB) incidence data, 
+        categorized by regions and countries. The size of each rectangle corresponds to the number of TB incidents 
+        in each country, while the color intensity represents the incidence rate per 100,000 people.
+        You can select a specific region or metric to filter and explore the data. Hover over a rectangle for 
+        detailed information, and click to highlight a country.
+    </p>
+
+    <div class="dropdown">
+        <label for="regionSelect">Select Region: </label>
+        <select id="regionSelect">
+            <option value="All">All Regions</option>
+        </select>
+    </div>
+    <div class="dropdown">
+        <label for="metricSelect">Select Metric: </label>
+        <select id="metricSelect">
+            <option value="e_inc_num">Incidence Rate</option>
+            <option value="e_mort_exc_tbhiv_num">Mortality Rate (Excluding HIV)</option>
+            <option value="e_mort_tbhiv_num">Mortality Rate (Including HIV)</option>
         </select>
     </div>
 
-    <!-- tooltip div -->
-    <div class= "tooltip" id= "tooltip" style= "opacity: 0;"></div>
+    <div class="tooltip" id="tooltip" style="opacity: 0;"></div>
 
     <script>
-        // setting up the visualization
+        // Define margins and SVG dimensions
         const margins = { top: 20, right: 30, bottom: 40, left: 50 };
         const width = 800 - margins.left - margins.right;
         const height = 400 - margins.top - margins.bottom;
+
+        // Create SVG container
         const svg = d3.select("body")
             .append("svg")
-            .attr("width", width + margins.right + margins.left)
+            .attr("width", width + margins.left + margins.right)
             .attr("height", height + margins.top + margins.bottom)
             .append("g")
             .attr("transform", `translate(${margins.left},${margins.top})`);
 
         const tooltip = d3.select("#tooltip");
 
-        // loading the data in d3
-        d3.csv("preprocessed_data_tb.csv").then(function(data) {
-            console.log("Data loaded successfully:", data);
-
-            // data parsing
+        // Load and process CSV data
+        d3.csv("data/preprocessed_data_tb.csv").then(data => {
             data.forEach(d => {
                 d.e_inc_num = +d.e_inc_num;
                 d.e_inc_100k = +d.e_inc_100k;
             });
 
-            // filter menu based on regions
+            // Populate dropdown with regions
             const regions = Array.from(new Set(data.map(d => d.g_whoregion)));
-            const dropdown = d3.select("#regionSelect");
+            const regionDropdown = d3.select("#regionSelect");
             regions.forEach(region => {
-                dropdown.append("option").text(region).attr("value", region);
+                regionDropdown.append("option").text(region).attr("value", region);
             });
 
+            let currentMetric = "e_inc_num"; // Default metric
 
-            // function to load the treemap
-            function loadTreemap(region) {
-                // filter data based on region
+            // Function to render treemap
+            const renderTreemap = (region, metric) => {
                 const filteredData = region === "All" ? data : data.filter(d => d.g_whoregion === region);
 
-                // creating hierarchical data structure
-                const nestedData = d3.group(filteredData, d => d.g_whoregion, d => d.country);
+                const hierarchicalData = d3.group(filteredData, d => d.g_whoregion, d => d.country);
                 const root = d3.hierarchy({
                     name: "World",
-                    children: Array.from(nestedData, ([region, countries]) => ({
+                    children: Array.from(hierarchicalData, ([region, countries]) => ({
                         name: region,
                         children: Array.from(countries, ([country, values]) => ({
                             name: country,
@@ -120,90 +125,32 @@
                         }))
                     }))
                 })
-                    .sum(d => d.e_inc_num) // rectangles size based on incidence
+                    .sum(d => d[metric])
                     .sort((a, b) => b.value - a.value);
 
-                // D3 treemap layout
-                const treemapLayout = d3.treemap()
-                    .size([width, height])
-                    .padding(1);
+                const treemapLayout = d3.treemap().size([width, height]).padding(1);
                 treemapLayout(root);
 
-                // colors based on per 100k col
                 const colorScale = d3.scaleSequential(d3.interpolateReds)
-                    .domain([0, d3.max(filteredData, d => d.e_inc_100k)]);
-                
-                // adding a legend
-                const legendWidth= 200;
-                const legendHeight= 20;
+                    .domain([0, d3.max(filteredData, d => d[metric])]);
 
-                // append a group for the legend using g 
-                const legend= d3.select("body")
-                    .append("svg")
-                    .attr("width", legendWidth + margins.left + margins.right)
-                    .attr("height", legendHeight + 50)
-                    .append("g")
-                    .attr("transform", `translate(${margins.left}, 20)`);
+                const rectNodes = svg.selectAll("rect")
+                    .data(root.leaves(), d => d.data.name);
 
-                // color scale for legend using scale linear
-                const legendScale= d3.scaleLinear()
-                    .domain(colorScale.domain())
-                    .range([0, legendWidth]);
-
-                const gradient= legend.append("defs")
-                    .append("linearGradient")
-                    .attr("id", "legend-gradient")
-                    .attr("x1", "0%")
-                    .attr("x2", "100%")
-                    .attr("y1", "0%")
-                    .attr("y2", "0%");
-
-                gradient.append("stop")
-                    .attr("offset", "0%")
-                    .attr("stop-color", d3.interpolateReds(0));
-
-                gradient.append("stop")
-                    .attr("offset", "100%")
-                    .attr("stop-color", d3.interpolateReds(1));
-
-                // draw the rect for the gradient
-                legend.append("rect")
-                    .attr("x", 0)
-                    .attr("y", 0)
-                    .attr("width", legendWidth)
-                    .attr("height", legendHeight)
-                    .style("fill", "url(#legend-gradient)");
-
-                // legend axis
-                const legendAxis = d3.axisBottom(legendScale)
-                    .ticks(5)
-                    .tickFormat(d3.format(".0f"));
-
-                legend.append("g")
-                    .attr("transform", `translate(0, ${legendHeight})`)
-                    .call(legendAxis)
-                    .attr("class", "legend-axis");
-
-                // data binding concept
-                const rect_nodes = svg.selectAll("rect")
-                    .data(root.leaves(), d => d.data.name); 
-                
-                // joining nodes with transitions and more
-                rect_nodes.join(
+                rectNodes.join(
                     enter => enter.append("rect")
                         .attr("class", "node")
                         .attr("x", d => d.x0)
                         .attr("y", d => d.y0)
                         .attr("width", d => d.x1 - d.x0)
                         .attr("height", d => d.y1 - d.y0)
-                        .attr("fill", d => colorScale(d.data.e_inc_100k))
+                        .attr("fill", d => colorScale(d.data[metric]))
                         .on("mouseover", (event, d) => {
                             tooltip.transition().duration(200).style("opacity", 1);
                             tooltip.html(`
                                 <b>Country:</b> ${d.data.country}<br>
                                 <b>Region:</b> ${d.data.g_whoregion}<br>
-                                <b>Incidence:</b> ${d.data.e_inc_num}<br>
-                                <b>Rate:</b> ${d.data.e_inc_100k} per 100k
+                                <b>Value:</b> ${d.data[metric]}
                             `)
                                 .style("left", (event.pageX + 10) + "px")
                                 .style("top", (event.pageY - 28) + "px");
@@ -212,23 +159,20 @@
                             tooltip.transition().duration(200).style("opacity", 0);
                         })
                         .on("click", (event, d) => {
-                            // Highlight clicked node
                             d3.selectAll(".node").classed("highlighted", false);
                             d3.select(event.target).classed("highlighted", true);
                             alert(`Clicked on ${d.data.country}`);
                         }),
                     update => update
-                        .transition()
-                        .duration(500)
+                        .transition().duration(500)
                         .attr("x", d => d.x0)
                         .attr("y", d => d.y0)
                         .attr("width", d => d.x1 - d.x0)
                         .attr("height", d => d.y1 - d.y0)
-                        .attr("fill", d => colorScale(d.data.e_inc_100k)),
+                        .attr("fill", d => colorScale(d.data[metric])),
                     exit => exit.remove()
                 );
 
-                // Add/update text labels
                 const labels = svg.selectAll("text")
                     .data(root.leaves(), d => d.data.name);
 
@@ -237,36 +181,32 @@
                         .attr("x", d => d.x0 + 5)
                         .attr("y", d => d.y0 + 15)
                         .text(d => d.x1 - d.x0 > 50 && d.y1 - d.y0 > 20 ? d.data.country : "")
-                        .attr("font-size", "10px")
-                        .attr("fill", "black")
-                        .attr("pointer-events", "none"),
+                        .attr("font-size", "8px")
+                        .attr("fill", "black"),
                     update => update
-                        .transition()
-                        .duration(500)
+                        .transition().duration(500)
                         .attr("x", d => d.x0 + 5)
                         .attr("y", d => d.y0 + 15)
                         .text(d => d.x1 - d.x0 > 50 && d.y1 - d.y0 > 20 ? d.data.country : ""),
                     exit => exit.remove()
                 );
-            }
+            };
 
-            // initial treemap with all regions data
-            loadTreemap("All");
-
-            // update treemap on dropdown change
-            dropdown.on("change", function() {
+            // Dropdown event listeners
+            regionDropdown.on("change", function () {
                 const selectedRegion = d3.select(this).property("value");
-                loadTreemap(selectedRegion);
+                renderTreemap(selectedRegion, currentMetric);
             });
 
-        }).catch(function(error) {
-            console.error("Error loading the CSV file!", error);
+            d3.select("#metricSelect").on("change", function () {
+                currentMetric = d3.select(this).property("value");
+                const selectedRegion = d3.select("#regionSelect").property("value");
+                renderTreemap(selectedRegion, currentMetric);
+            });
+
+            // Initial treemap rendering
+            renderTreemap("All", "e_inc_num");
         });
     </script>
 </body>
 </html>
-
-
-
-
-

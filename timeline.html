@@ -4,63 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timeline Visualization</title>
+    <link rel="stylesheet" href="css/timeline.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        #controls {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .btn {
-            margin: 0 5px;
-            padding: 5px 10px;
-            border: none;
-            cursor: pointer;
-            color: #fff;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .tooltip {
-            position: absolute;
-            background: white;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 12px;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .legend {
-            display: flex;
-            align-items: center;
-            margin-top: 10px;
-        }
-        .legend div {
-            display: flex;
-            align-items: center;
-            margin-right: 10px;
-        }
-        .legend div span {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
-        svg {
-            background-color: #f9f9f9;
-            margin-bottom: 10px;
-        }
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
 </head>
 <body>
     <h1><b>Animated Timeline Visualization</b></h1>
@@ -75,9 +21,10 @@
             <option value="SEA">SEA</option>
             <option value="WPR">WPR</option>
         </select>
-        <button class="btn" id="play-pause-btn" style="background-color: #007bff;">Pause</button>
+        <button class="btn" id="play-pause-btn;">Pause</button>
         <input type="range" id="year-slider" min="1990" max="2020" value="2015" step="1" style="margin: 0 10px;">
         <span id="year-display">2015</span>
+        <button id="download-btn" style=" margin-left: 10px;">Download Image</button>
     </div>
     <svg id="chart" width="900" height="500"></svg>
     <div class="legend">
@@ -216,6 +163,15 @@
     update(minYear);
 });
 
+// Download as image
+document.getElementById("download-btn").addEventListener("click", () => {
+    html2canvas(document.querySelector("#chart")).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "timeline_chart.png";
+        link.href = canvas.toDataURL();
+        link.click();
+    });
+});
     </script>
 </body>
 </html>

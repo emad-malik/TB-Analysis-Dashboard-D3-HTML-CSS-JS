@@ -1,55 +1,12 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tree Visualization</title>
+    <link rel="stylesheet" href="css/tree.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <style>
-        svg {
-            font-family: Arial, Helvetica, sans-serif;
-        }
-        .node {
-            stroke: #fff;
-            stroke-width: 1px;
-        }
-        .tooltip {
-            position: absolute;
-            text-align: center;
-            padding: 8px;
-            background: lightgray;
-            border: 1px solid gray;
-            border-radius: 4px;
-            pointer-events: none;
-            font-size: 12px;
-        }
-        h1 {
-            text-align: center;
-            margin-top: 10px;
-        }
-        p {
-            text-align: center;
-            margin: 10px auto;
-            font-size: 16px;
-            max-width: 80%;
-        }
-        .highlighted {
-            stroke: black;
-            stroke-width: 2px;
-        }
-        .dropdown {
-            margin: 20px;
-            text-align: center;
-        }
-        select {
-            padding: 8px 12px;
-            font-size: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: white;
-            color: #333;
-        }
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
 </head>
 <body>
     <h1><b>Tree Hierarchical Visualization</b></h1>
@@ -78,6 +35,9 @@
 
     <div class="tooltip" id="tooltip" style="opacity: 0;"></div>
 
+    <!-- Download Button -->
+    <button id="downloadBtn">Download as Image</button>
+
     <script>
         // Define margins and SVG dimensions
         const margins = { top: 20, right: 30, bottom: 40, left: 50 };
@@ -95,7 +55,7 @@
         const tooltip = d3.select("#tooltip");
 
         // Load and process CSV data
-        d3.csv("data/preprocessed_data_tb.csv").then(data => {
+        d3.csv("preprocessed_data_tb.csv").then(data => {
             data.forEach(d => {
                 d.e_inc_num = +d.e_inc_num;
                 d.e_inc_100k = +d.e_inc_100k;
@@ -206,6 +166,16 @@
 
             // Initial treemap rendering
             renderTreemap("All", "e_inc_num");
+
+            // Download Button Click Event
+            document.getElementById("downloadBtn").addEventListener("click", function() {
+                html2canvas(svg.node()).then(function(canvas) {
+                    const link = document.createElement("a");
+                    link.download = "treemap.png";
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+                });
+            });
         });
     </script>
 </body>

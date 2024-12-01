@@ -54,6 +54,11 @@
     <!-- Tooltip div for Sunburst -->
     <div class="sb_tooltip" id="sb_tooltip"></div>
 
+    <footer>
+        <p>All Rights Reserved <b>Emad Malik 22i2072 | Umema Ashar 22i2036 | Hamza Asad 22i1908</b></p>
+        <p>Data Visualization Final Project</p>
+    </footer>
+
     <script>
         d3.csv("data/preprocessed_data_tb.csv").then(function(data) {
         const totalIncidence = d3.sum(data, d => d.e_inc_num);

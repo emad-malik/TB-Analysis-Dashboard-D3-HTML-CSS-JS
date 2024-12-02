@@ -2,84 +2,183 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Map Visualization</title>
+    <title>Focus + Context Map</title>
     <link rel="stylesheet" href="css/mapchart.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    
+    <style>
+        .tooltip {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            display: none;
+        }
+        .highlight {
+            fill: orange !important;
+        }
+        .info-panel {
+            position: absolute;
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <h1><b>Map Visualization</b></h1>
-    <p>This map visualization displays the global distribution of TB incidence rates. Hover over or click on a country in the small map to view detailed information in the main map.</p>
-    <svg id="small-map"></svg>
-    <svg id="main-map"></svg>
-    <div class="info-panel" id="info-panel"></div>
+    <h1>Mapchart</h1>
+    <p>
+        This visualization has two maps: an overview (small) map for focus, and a detailed (main) map for context.
+        Hovering over the overview map displays country names, and clicking highlights the country in the main map with additional details.
+    </p>
+    <div class="map-container">
+        <div class="small-map">
+            <h3>Overview Map</h3>
+            <svg id="small-map" width="400" height="200"></svg>
+        </div>
+        <div class="main-map">
+            <h3>Detail Map</h3>
+            <svg id="main-map" width="800" height="400"></svg>
+            <div class="info-panel" id="info-panel"></div>
+        </div>
+    </div>
+    <div class="tooltip"></div>
 
     <script>
-        const smallMapWidth = 300, smallMapHeight = 200;
-        const mainMapWidth = 1200, mainMapHeight = 600;
+        const smallMapWidth = 400, smallMapHeight = 200;
+        const mainMapWidth = 800, mainMapHeight = 400;
 
-        // Set up projections for both maps
-        const smallProjection = d3.geoMercator().scale(50).translate([smallMapWidth / 2, smallMapHeight / 1.5]);
+        // Map projections
+        const smallProjection = d3.geoMercator().scale(80).translate([smallMapWidth / 2, smallMapHeight / 1.5]);
         const mainProjection = d3.geoMercator().scale(150).translate([mainMapWidth / 2, mainMapHeight / 1.5]);
+
         const smallPath = d3.geoPath().projection(smallProjection);
         const mainPath = d3.geoPath().projection(mainProjection);
 
+        // SVG containers
         const smallSvg = d3.select("#small-map");
         const mainSvg = d3.select("#main-map");
 
-        // Load GeoJSON and CSV data
+        // Load GeoJSON and data
         Promise.all([
             d3.json("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"),
             d3.csv("preprocessed_data_tb.csv")
         ]).then(([geoData, csvData]) => {
+            // Map CSV data with GeoJSON
             const dataMap = new Map(csvData.map(d => [d.iso3, d]));
 
-            // Render the small map
-            renderMap(smallSvg, geoData, smallPath, dataMap, smallProjection);
-            // Render the main map
-            renderMap(mainSvg, geoData, mainPath, dataMap, mainProjection);
+            // Color scale
+            const colorScale = d3.scaleSequential(d3.interpolateReds)
+                .domain([0, d3.max(csvData, d => +d.e_inc_100k) || 500]);
 
-            // Add interactivity between the small map and the main map
+            // Render small map
             smallSvg.selectAll("path")
-                .on("mouseover", function(event, d) {
-                    const iso3 = d.properties.ISO_A3;
-                    highlightCountry(mainSvg, iso3, dataMap);
+                .data(geoData.features)
+                .enter().append("path")
+                .attr("d", smallPath)
+                .attr("fill", "#ddd")
+                .attr("stroke", "#aaa")
+                .on("mouseover", function (event, d) {
+                    d3.select(this).attr("fill", "#aaa");
+                    tooltip.style("display", "block")
+                        .html(`<strong>${d.properties.ADMIN}</strong>`);
                 })
-                .on("click", function(event, d) {
-                    const iso3 = d.properties.ISO_A3;
-                    displayCountryInfo(iso3, dataMap);
+                .on("mousemove", function (event) {
+                    tooltip.style("left", `${event.pageX + 10}px`)
+                        .style("top", `${event.pageY - 20}px`);
+                })
+                .on("mouseout", function (event, d) {
+                    d3.select(this).attr("fill", "#ddd");
+                    tooltip.style("display", "none");
+                })
+                .on("click", function (event, d) {
+                    
+                    const bounds = smallPath.bounds(d);
+                    const dx = bounds[1][0] - bounds[0][0];
+                    const dy = bounds[1][1] - bounds[0][1];
+                    const x = (bounds[0][0] + bounds[1][0]) / 2;
+                    const y = (bounds[0][1] + bounds[1][1]) / 2;
+                    const scale = Math.min(mainMapWidth / dx, mainMapHeight / dy);
+                    const translate = [mainMapWidth / 2 - scale * x, mainMapHeight / 2 - scale * y];
+
+                    mainSvg.selectAll("*").remove(); // Clear previous details
+
+                    // Render context map
+                    mainSvg.append("g")
+                        .selectAll("path")
+                        .data(geoData.features)
+                        .enter().append("path")
+                        .attr("d", mainPath)
+                        .attr("fill", d2 => {
+                            const iso3 = d2.properties.ISO_A3;
+                            const value = dataMap.get(iso3) ? +dataMap.get(iso3).e_inc_100k : null;
+                            return value ? colorScale(value) : "#eee";
+                        })
+                        .attr("stroke", "#000")
+                        .on("click", function (event, d2) {
+                            const data = dataMap.get(d2.properties.ISO_A3);
+                            const infoPanel = document.getElementById("info-panel");
+                            infoPanel.style.display = "block";
+                            infoPanel.innerHTML = `
+                                <strong>${d2.properties.ADMIN}</strong><br>
+                                Estimated Population: ${data ? data.e_pop_num : "N/A"}<br>
+                                TB Incidence Number: ${data ? data.e_inc_num : "N/A"}<br>
+                                TB-HIV Percentage: ${data ? data.e_tbhiv_prct : "N/A"}%<br>
+                                Mortality Excluding TB-HIV (per 100k): ${data ? data.e_mort_exc_tbhiv_100k : "N/A"}<br>
+                            `;
+                            infoPanel.style.left = `${event.pageX + 10}px`;
+                            infoPanel.style.top = `${event.pageY - 100}px`;
+                        });
+                        // Add legend for color scale
+const legendWidth = 300;
+const legend = mainSvg.append("g")
+    .attr("transform", `translate(${mainMapWidth - legendWidth - 20}, 20)`);
+
+const legendScale = d3.scaleLinear()
+    .domain(colorScale.domain())
+    .range([0, legendWidth]);
+
+const legendAxis = d3.axisBottom(legendScale)
+    .ticks(6);
+
+legend.append("rect")
+    .attr("width", legendWidth)
+    .attr("height", 10)
+    .style("fill", "url(#gradient)");
+
+legend.append("g")
+    .attr("transform", "translate(0, 10)")
+    .call(legendAxis);
+
+// Add gradient for legend
+const defs = mainSvg.append("defs");
+const gradient = defs.append("linearGradient")
+    .attr("id", "gradient")
+    .attr("x1", "0%").attr("y1", "0%")
+    .attr("x2", "100%").attr("y2", "0%");
+
+gradient.selectAll("stop")
+    .data(d3.range(0, 1.01, 0.1))
+    .enter().append("stop")
+    .attr("offset", d => `${d * 100}%`)
+    .attr("stop-color", d => colorScale(d * d3.max(csvData, d => +d.e_inc_100k)));
+                    mainSvg.transition().duration(750).call(
+                        d3.zoom()
+                            .scaleExtent([1, 8])
+                            .translateExtent([[0, 0], [mainMapWidth, mainMapHeight]])
+                            .on("zoom", (event) => {
+                                mainSvg.selectAll("path").attr("transform", event.transform);
+                            }).transform,
+                        d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+                    );
                 });
         }).catch(error => console.error(error));
 
-        function renderMap(svg, geoData, path, dataMap, projection) {
-            svg.selectAll("path")
-                .data(geoData.features)
-                .enter().append("path")
-                .attr("class", "country")
-                .attr("d", path)
-                .attr("fill", d => {
-                    const iso3 = d.properties.ISO_A3;
-                    const value = dataMap.get(iso3) ? +dataMap.get(iso3).e_inc_100k : null;
-                    return value ? colorScale(value) : "#eee";
-                });
-        }
-
-        function highlightCountry(svg, iso3, dataMap) {
-            svg.selectAll(".country").attr("opacity", 0.5);
-            svg.selectAll(`path[data-iso3='${iso3}']`).attr("opacity", 1);
-        }
-
-        function displayCountryInfo(iso3, dataMap) {
-            const countryData = dataMap.get(iso3);
-            const infoPanel = document.getElementById("info-panel");
-            infoPanel.innerHTML = `
-                <h3>${countryData.country}</h3>
-                <p>Population: ${countryData.population}</p>
-                <p>TB Incidence: ${countryData.e_inc_100k} per 100k</p>
-                <p>TB-HIV Percentage: ${countryData.tb_hiv_percentage}%</p>
-                <p>Mortality Rate: ${countryData.mortality_rate}</p>
-            `;
-        }
+        
     </script>
 </body>
 </html>

@@ -3,7 +3,9 @@
 ## UMEMA ASHAR 22I2036 | EMAD MALIK 22I2072 | HAMZA ASAD 22I1908
 
 ## Dataset Overview
-The project utilizes four datasets, which were preprocessed and merged into a unified dataset, preprocessed_data_tb. Below is an overview of the individual datasets and the variables they include:
+The project utilizes four datasets, which were preprocessed and merged into a unified dataset, preprocessed_data_tb.
+These datasets give important information about tuberculosis (TB). They help us understand how common TB is, how the disease resists treatments, how it affects different groups of people, and how it is spread across various regions.
+Below is an overview of the individual datasets and the variables they include:
 ### 2.1 LTBI Estimates Household Dataset: 
 This dataset provides estimates of latent tuberculosis infection (LTBI) in households.
 ### 2.2 MDR-RR TB Burden Estimates: 

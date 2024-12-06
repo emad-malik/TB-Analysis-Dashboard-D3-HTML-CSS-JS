@@ -205,3 +205,8 @@ Data Granularity: This chart is highly useful for data sets with multiple hierar
 
 ## 6. Conclusion
 This project successfully integrates multiple TB-related datasets into a unified, preprocessed dataset that can be used for comprehensive analysis. The dashboard created for visualizing TB trends across countries and regions is an effective tool for identifying key trends and insights. By analyzing the incidence, mortality, and case fatality ratios, users can better understand the global TB burden and identify areas in need of intervention. Future improvements could include incorporating more granular data, such as specific interventions and policies, to assess their impact on TB outcomes.
+
+
+
+
+ion like d3 :/
